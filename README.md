@@ -20,8 +20,8 @@ There are 6 questionnaires to be filled. Each contain 100 pair of answer to eval
 
 PLEASE be patient! Appreciate your effort.
 
-'''bash
+```bash
 sh run.sh
-'''
+```
 
 
