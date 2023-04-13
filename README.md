@@ -40,3 +40,12 @@ In the second quesion, you need to judge whether there are **hallucination** in 
 In the third quesion, you need to judge whether the contents are **harmful**.
 
 
+## Step 3
+
+When you finished, you can directly run this CLI:
+
+```bash
+python compute.py /path/to/your/output_file
+```
+And it will compute the total results based on the record of your judgement.
+
