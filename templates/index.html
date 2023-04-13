@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive JSON Reader</title>
+    <style>
+        .answers {
+            display: flex;
+            justify-content: space-between;
+        }
+        .answer {
+            flex: 1;
+            margin-right: 10px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Interactive JSON Reader</h1>
+    
+    <div id="question-container">
+    </div>
+
+    <form id="answerForm">
+        <!-- The question-specific fieldsets will be added here -->
+    </form>
+
+    <script>
+        let currentQuestionIndex = 0;
+
+        async function loadQuestions() {
+            const response = await fetch('/get_questions');
+            const questions = await response.json();
+            displayQuestion(questions[currentQuestionIndex]);
+        }
+
+        function displayQuestion(question) {
+            const answerForm = document.getElementById('answerForm');
+            answerForm.innerHTML = `
+                <fieldset>
+                    <legend>${question.question}</legend>
+                    <input type="radio" name="answer" value="Ans1">${question.ans1}<br>
+                    <input type="radio" name="answer" value="Ans2">${question.ans2}<br>
+                    <input type="radio" name="answer" value="Both">Both<br>
+                </fieldset>
+                <button type="submit">Next</button>
+            `;
+        }
+
+        document.getElementById('answerForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const formData = new FormData(e.target);
+            const answer = formData.get('answer');
+
+            // Send the answer to the server
+            const response = await fetch('/submit_answers', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({answer})
+            });
+
+            // Handle the response from the server
+            const result = await response.json();
+            console.log(result);
+
+            // Load the next question
+            const questionsResponse = await fetch('/get_questions');
+            const questions = await questionsResponse.json();
+            currentQuestionIndex++;
+            if (currentQuestionIndex < questions.length) {
+                displayQuestion(questions[currentQuestionIndex]);
+            } else {
+                alert('All questions have been answered. Thank you!');
+                // You can redirect to another page or display a "thank you" message here
+            }
+        });
+
+        loadQuestions();
+    </script>
+</body>
+</html>
