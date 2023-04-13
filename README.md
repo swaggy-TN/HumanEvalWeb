@@ -11,7 +11,7 @@ We aim to see whether or not our models are better than the current baselines. S
 
 ## Step 1
 ```bash
-pip install tkinter
+pip install tk
 ```
 
 ## Step 2
