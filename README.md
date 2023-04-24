@@ -1,51 +1,56 @@
-# HumanEval
+# GPT-4 Eval
 
-We aim to see whether or not our models are better than the current baselines. So reviewers are only asked to give a clear {Win, Tie, Lose} verdict.
+Given a pair of candidate answers, here is the pipeline to rate these answers by calling openai APIs:
 
-**Overall Quality**: Consider several aspects: helpfulness, relevance, accuracy, coherence, and level of detail.
-
-**Hallucination**: The content should not contain false or misleading information. (Factual problems.)
-
-**Harmfulness**: The content should not perpetuate harmful stereotypes or include offensive or harmful language that can negatively impact individuals or groups
-
-
-## Step 1
-```bash
-pip install tk
-```
+## Step 1 
+First make sure the question file is in the `questions/` directory, the answer file is in the `answers/` directory and the number of candidate answers strictly corresponding to the number of questions. 
 
 ## Step 2
-
-There are 6 questionnaires to be filled. 
-Each contain 100 pair of answer to evaluate.
-PLEASE be patient! Appreciate your effort.
-
-
-For example, if you are assigned to judge the answers from Phoenix-7b and ChatGPT, your CLI will be like:
+See the `evaluate.sh`
 ```bash
-python show.py --ans pair-merge/phoenix_vs_gpt35.jsonl --output evaluations/phoenix_vs_gpt35.jsonl
+#GPT-4
+langs=(ja es pt de it)
+rule=prompt.jsonl
+for lang in ${langs[*]};do
+        question=questions/question_$lang\_100.jsonl
+        answer1=$lang-outputs/answer_phoenix-inst-chat-7b.jsonl
+        answer2=$lang-outputs/answer_gpt35.jsonl  
+        output=$lang\_reviews/phoenix-inst-chat-7b_vs_gpt35.jsonl
+        max_tokens=1024
+        options="\
+                --question $question \
+                --answer-list $answer1 $answer2 \
+                --rule $rule \
+                --output $output \
+                --max-tokens $max_tokens \
+                "
+
+        export SCRIPT_PATH=eval_gpt_review.py
+
+        echo "Start Evaluation"
+        python3 $SCRIPT_PATH $options
+        echo "Finished"
+done
+
 ```
 
-`-ans`: means the answer pair and question file to be load
-
-`-output`: means your juedgement will be save into this path
-
-Specifically, during the reviewing process, you will see an UI in which you will find the Question been asked at the top bar
-and the answers pair that is diveded into left and right.
-## Question 1
-In the first quesion, you need to judge which one is better by considering their **Overall Quality**. You can choose Ans1, Ans2 or Tie.
-## Question 2
-In the second quesion, you need to judge whether there are **hallucination** in their contents.
-## Question 3
-In the third quesion, you need to judge whether the contents are **harmful**.
-
+modify the environment variables:`question`,`answer1`, `answer2` and `output`. If the `lang` vairable is no longer needed you can directly delete it in the shell scripts and test the candidate answer pairs one by one.
 
 ## Step 3
 
-When you finished, you can directly run this CLI:
-
+Once you received the reveiws, you can use this CLI:
 ```bash
-python compute.py /path/to/your/output_file
+python compute_score.py --review /path/to/review.jsonl
 ```
-And it will compute the total results based on the record of your judgement.
+I added a randomly switch-side function to alleviate the position bias of the GPT4 evaluation. So if the naming of your review file has a suffix of `-switch-side.jsonl`, you will have to add `--switch` in the aforementioned CLI.
+
+NB: if the number of questions isn't equal 100, you will have to modify the code in the `compute_score.py` at line 29 and line 30:
+```python
+    model1score/=100
+    model2score/=100
+```
+
+
+It's the same case if you want to obtain a coarse-grained comparision (order) of the candidate pairs. 
+The difference is that you have to use `evaluate_order.sh`.
 
